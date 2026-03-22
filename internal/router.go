@@ -1,6 +1,7 @@
 package app
 
 import (
+	appMiddleware "gem/internal/middlewares"
 	"gem/internal/registry"
 	"gem/internal/services/auth"
 	"gem/internal/services/mine"
@@ -14,8 +15,10 @@ import (
 func RegisterApiRoutes(r *registry.ServiceRegistry) http.Handler {
 	apiRouter := chi.NewRouter()
 
+	apiRouter.Use(appMiddleware.JWTMiddleware(r.Config.JWTSecret))
+
 	apiRouter.Mount("/v1/auth", auth.RegisterAuthRoutes(r.AuthService))
-	apiRouter.Mount("/v1/mines", mine.RegisterMineRoutes(r.MineService))
+	apiRouter.With(appMiddleware.RequireAuth()).Mount("/v1/mines", mine.RegisterMineRoutes(r.MineService))
 
 	return apiRouter
 

@@ -14,6 +14,7 @@ type ServiceRegistry struct {
 	UserService *user.UserService
 	AuthService *auth.AuthService
 	MineService *mine.MineService
+	Config      *config.Config
 }
 
 func New(db *sql.DB, cfg *config.Config) *ServiceRegistry {
@@ -30,5 +31,6 @@ func New(db *sql.DB, cfg *config.Config) *ServiceRegistry {
 		UserService: userSvc,
 		AuthService: authSvc,
 		MineService: mineSvc,
+		Config:      cfg,
 	}
 }

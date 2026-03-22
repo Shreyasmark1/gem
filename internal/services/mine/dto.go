@@ -1,6 +1,6 @@
 package mine
 
 type SaveMine struct {
-	MineID   string `json:"mineId"`
-	MineName string `json:"mineName"`
+	MineID   string `json:"mineId" validate:"omitempty,uuid"`
+	MineName string `json:"mineName" validate:"required,min=3"`
 }

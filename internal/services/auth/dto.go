@@ -1,7 +1,7 @@
 package auth
 
 type SignUpRequest struct {
-	EmailID string `json:"emailId"`
+	EmailID string `json:"emailId" validate:"required,email"`
 }
 
 type SignUpResponse struct {
@@ -11,10 +11,10 @@ type SignUpResponse struct {
 }
 
 type VerifyAuthRequest struct {
-	Token    string `json:"token"`
-	EmailID  string `json:"emailId"`
-	FullName string `json:"fullName"`
-	Password string `json:"password"`
+	Token    string `json:"token" validate:"required"`
+	EmailID  string `json:"emailId" validate:"required,email"`
+	FullName string `json:"fullName" validate:"required,min=2"`
+	Password string `json:"password" validate:"required,min=8"`
 }
 
 type VerifyAuthResponse struct {
@@ -29,8 +29,8 @@ type UserProfile struct {
 }
 
 type LoginRequest struct {
-	EmailID  string `json:"emailId"`
-	Password string `json:"password"`
+	EmailID  string `json:"emailId" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }
 
 type LoginResponse struct {

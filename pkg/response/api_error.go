@@ -20,6 +20,10 @@ func BadRequest(msg string) *ApiException {
 	return &ApiException{Message: msg, StatusCode: http.StatusBadRequest}
 }
 
+func Unauthorized(msg string) *ApiException {
+	return &ApiException{Message: msg, StatusCode: http.StatusUnauthorized}
+}
+
 func InternalServerError(msg string) *ApiException {
 	return InternalErrorServerError(msg, nil)
 }

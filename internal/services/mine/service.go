@@ -2,8 +2,10 @@ package mine
 
 import (
 	"context"
+	appMiddleware "gem/internal/middlewares"
 	"gem/internal/store"
 	"gem/internal/store/repository"
+	"gem/pkg/response"
 
 	"github.com/google/uuid"
 )
@@ -27,16 +29,16 @@ func (m *MineService) SaveMine(ctx context.Context, body SaveMine) (*SaveMine, e
 }
 
 func (m *MineService) createMine(ctx context.Context, body SaveMine) (*SaveMine, error) {
-	// For now, assuming owner_id is passed in context or mocking it if context doesn't have it.
-	// Since we don't have the explicit session middleware context key, we will extract it or use an empty UUID.
-	ownerIDStr, _ := ctx.Value("user_id").(string)
-	if ownerIDStr == "" {
-		// fallback to a mock UUID if no auth middleware is wired yet
-		ownerIDStr = "00000000-0000-0000-0000-000000000000"
+	session, ok := ctx.Value(appMiddleware.SessionContextKey).(*appMiddleware.Session)
+
+	if !ok || session == nil || session.UserID == "" {
+		return nil, response.Unauthorized("missing user session")
 	}
-	ownerID, err := uuid.Parse(ownerIDStr)
+
+	ownerID, err := uuid.Parse(session.UserID)
+
 	if err != nil {
-		ownerID = uuid.Nil
+		return nil, response.Unauthorized("invalid user id format")
 	}
 
 	mine, err := m.store.Queries.CreateMine(ctx, repository.CreateMineParams{
@@ -44,9 +46,11 @@ func (m *MineService) createMine(ctx context.Context, body SaveMine) (*SaveMine,
 		MineName:  body.MineName,
 		CreatedBy: ownerID,
 	})
+
 	if err != nil {
-		return nil, err
+		return nil, response.InternalErrorServerError("failed to create mine", err)
 	}
+
 	return &SaveMine{
 		MineID:   mine.MineID.String(),
 		MineName: mine.MineName,
@@ -55,16 +59,21 @@ func (m *MineService) createMine(ctx context.Context, body SaveMine) (*SaveMine,
 
 func (m *MineService) updateMine(ctx context.Context, body SaveMine) (*SaveMine, error) {
 	mineID, err := uuid.Parse(body.MineID)
+
 	if err != nil {
-		return nil, err
+		return nil, response.BadRequest("invalid mine id format in request")
 	}
-	ownerIDStr, _ := ctx.Value("user_id").(string)
-	if ownerIDStr == "" {
-		ownerIDStr = "00000000-0000-0000-0000-000000000000"
+
+	session, ok := ctx.Value(appMiddleware.SessionContextKey).(*appMiddleware.Session)
+
+	if !ok || session == nil || session.UserID == "" {
+		return nil, response.Unauthorized("missing user session")
 	}
-	ownerID, err := uuid.Parse(ownerIDStr)
+
+	ownerID, err := uuid.Parse(session.UserID)
+
 	if err != nil {
-		ownerID = uuid.Nil
+		return nil, response.Unauthorized("invalid user id format")
 	}
 
 	mine, err := m.store.Queries.UpdateMine(ctx, repository.UpdateMineParams{
@@ -72,9 +81,11 @@ func (m *MineService) updateMine(ctx context.Context, body SaveMine) (*SaveMine,
 		MineName:  body.MineName,
 		UpdatedBy: uuid.NullUUID{UUID: ownerID, Valid: true},
 	})
+
 	if err != nil {
-		return nil, err
+		return nil, response.InternalErrorServerError("failed to update mine", err)
 	}
+
 	return &SaveMine{
 		MineID:   mine.MineID.String(),
 		MineName: mine.MineName,
