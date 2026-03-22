@@ -5,6 +5,7 @@ import (
 	appMiddleware "gem/internal/middlewares"
 	"gem/internal/store"
 	"gem/internal/store/repository"
+	"gem/pkg/db"
 	"gem/pkg/response"
 
 	"github.com/google/uuid"
@@ -41,14 +42,17 @@ func (m *MineService) createMine(ctx context.Context, body SaveMine) (*SaveMine,
 		return nil, response.Unauthorized("invalid user id format")
 	}
 
-	mine, err := m.store.Queries.CreateMine(ctx, repository.CreateMineParams{
+	mine, err := db.DbExe(m.store.Queries.CreateMine(ctx, repository.CreateMineParams{
 		OwnerID:   ownerID,
 		MineName:  body.MineName,
 		CreatedBy: ownerID,
-	})
+	}))
 
 	if err != nil {
-		return nil, response.InternalErrorServerError("failed to create mine", err)
+		return nil, response.InternalServerError("failed to create mine", err)
+	}
+	if mine == nil {
+		return nil, response.InternalServerError("failed to create mine (nil result)")
 	}
 
 	return &SaveMine{
@@ -76,14 +80,29 @@ func (m *MineService) updateMine(ctx context.Context, body SaveMine) (*SaveMine,
 		return nil, response.Unauthorized("invalid user id format")
 	}
 
-	mine, err := m.store.Queries.UpdateMine(ctx, repository.UpdateMineParams{
+	existingMine, err := db.DbExe(m.store.Queries.GetMine(ctx, mineID))
+	if err != nil {
+		return nil, response.InternalServerError("failed to fetch mine", err)
+	}
+	if existingMine == nil {
+		return nil, response.NotFound("mine not found")
+	}
+
+	if existingMine.OwnerID != ownerID {
+		return nil, response.Unauthorized("you do not have permission to update this mine")
+	}
+
+	mine, err := db.DbExe(m.store.Queries.UpdateMine(ctx, repository.UpdateMineParams{
 		MineID:    mineID,
 		MineName:  body.MineName,
 		UpdatedBy: uuid.NullUUID{UUID: ownerID, Valid: true},
-	})
+	}))
 
 	if err != nil {
-		return nil, response.InternalErrorServerError("failed to update mine", err)
+		return nil, response.InternalServerError("failed to update mine", err)
+	}
+	if mine == nil {
+		return nil, response.InternalServerError("failed to update mine (nil result)")
 	}
 
 	return &SaveMine{

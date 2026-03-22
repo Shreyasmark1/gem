@@ -16,3 +16,7 @@ SET
   updated_at = CURRENT_TIMESTAMP
 WHERE mine_id = $1
 RETURNING *;
+
+-- name: GetMine :one
+SELECT * FROM mines
+WHERE mine_id = $1 LIMIT 1;

@@ -34,7 +34,7 @@ func WithTransaction[T any](ctx context.Context, s *Store, fn func(*repository.Q
 	if err != nil {
 
 		if rbErr := tx.Rollback(); rbErr != nil {
-			return result, response.InternalErrorServerError("Failed to commit transaction", err)
+			return result, response.InternalServerError("Failed to commit transaction", err)
 		}
 
 		return result, err

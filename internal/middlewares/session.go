@@ -55,7 +55,7 @@ func RequireAuth() func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			session, ok := r.Context().Value(SessionContextKey).(*Session)
 			if !ok || session == nil || session.UserID == "" {
-				_ = response.Unauthorized("Unauthorized")
+				_ = response.Failed(w, http.StatusUnauthorized, "Unauthorized")
 				return
 			}
 

@@ -44,6 +44,27 @@ func (q *Queries) CreateMine(ctx context.Context, arg CreateMineParams) (Mine, e
 	return i, err
 }
 
+const getMine = `-- name: GetMine :one
+SELECT mine_id, owner_id, mine_name, purity_score, created_at, created_by, updated_at, updated_by FROM mines
+WHERE mine_id = $1 LIMIT 1
+`
+
+func (q *Queries) GetMine(ctx context.Context, mineID uuid.UUID) (Mine, error) {
+	row := q.db.QueryRowContext(ctx, getMine, mineID)
+	var i Mine
+	err := row.Scan(
+		&i.MineID,
+		&i.OwnerID,
+		&i.MineName,
+		&i.PurityScore,
+		&i.CreatedAt,
+		&i.CreatedBy,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
 const updateMine = `-- name: UpdateMine :one
 UPDATE mines
 SET 

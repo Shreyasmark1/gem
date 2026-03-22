@@ -24,15 +24,15 @@ func Unauthorized(msg string) *ApiException {
 	return &ApiException{Message: msg, StatusCode: http.StatusUnauthorized}
 }
 
-func InternalServerError(msg string) *ApiException {
-	return InternalErrorServerError(msg, nil)
-}
-
-func InternalErrorServerError(msg string, err error) *ApiException {
+func InternalServerError(msg string, err ...error) *ApiException {
+	var e error
+	if len(err) > 0 {
+		e = err[0]
+	}
 	return &ApiException{
 		Message:    msg,
 		StatusCode: http.StatusInternalServerError,
-		Err:        err,
+		Err:        e,
 		StackTrace: string(debug.Stack()),
 	}
 }
