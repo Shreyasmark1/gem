@@ -1,0 +1,11 @@
+----------------
+-- ALTER TABLE public.atlas_schema_revisions SET SCHEMA atlas_migrations;
+----------------
+
+-- CREATE OR REPLACE FUNCTION update_timestamp()
+-- RETURNS TRIGGER AS $$
+-- BEGIN
+--     NEW.updated_at = CURRENT_TIMESTAMP;
+--     RETURN NEW;
+-- END;
+-- $$ LANGUAGE plpgsql;

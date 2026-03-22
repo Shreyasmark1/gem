@@ -1,0 +1,10 @@
+version: "2"
+sql:
+  - name: "app"
+    schema: "internal/migrations/schema"
+    queries: "internal/store/queries"
+    engine: "postgresql"
+    gen:
+      go:
+        package: "repository"
+        out: "internal/store/repository"

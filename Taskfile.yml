@@ -1,0 +1,53 @@
+version: "3"
+
+dotenv: [".env.local"]
+
+vars:
+  SCHEMA_DIR: "internal/migrations/schema"
+  SCRIPTS_DIR: "internal/migrations/scripts"
+
+tasks:
+  setup:
+    desc: "Install all required CLI tools"
+    cmds:
+      - go install ariga.io/atlas/cmd/atlas@latest
+      - go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+      - go install github.com/air-verse/air@latest
+      - atlas version
+      - sqlc version
+      - air -v
+
+  run:dev:
+    desc: Start the application with live reloading using Air
+    deps: [clean, db:queries]
+    cmds:
+      - air
+
+  db:queries:
+    desc: Generate Repository, Queries and Entity code from SQL using sqlc
+    cmds:
+      - sqlc generate
+
+  db:diff:
+    desc: "Generate a new migration script"
+    preconditions:
+      - sh: test -d {{.SCHEMA_DIR}}
+        msg: "Schema directory not found!"
+    cmds:
+      - mkdir -p {{.SCRIPTS_DIR}}
+      - atlas migrate diff {{.CLI_ARGS | default "auto_migration"}} --env local
+
+  db:migrate:
+    desc: "Apply changes to the database defined in .env"
+    cmds:
+      - atlas migrate apply --env local
+
+  clean:
+    desc: "Sync libraries and clean go.mod"
+    cmds:
+      - go mod tidy
+      - go mod verify
+    sources:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
